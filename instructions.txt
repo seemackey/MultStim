@@ -1,0 +1,107 @@
+%help me edit our generate trials function. we want users to pass a stimParams struct specifying all the tone and noise features and then write to text files. as you'll see, depending on the experiment type, users will want one feature to be randomly varied across trials. help me write this out. check the comments i left for you. 
+
+%function MultStimGenTrialFxn(stimParams, interstimulusInterval, numReps,exptType, paramsDir)
+    
+%inputs
+% stimParams, a struct with sound features specified, which will be used as
+% the basis for varying one feature across trials (e.g. tone freq)
+
+%interstimulusInterval in milliseconds
+% numReps (repetitions of each unique stimulus across trials)
+% paramsDir, where the stimulus information is written to
+
+
+    % The user specifies the type of experiment we're running
+    if contains(exptType,'BBN')
+        % in this condition, all features are held constant and
+        % ModDepth.txt, aka ModAmpFile is forced to zero to ensure the noise isn't
+        % modulated, set the stim type text file to be all 3's!
+        
+        % set pararms here
+    elseif contains(exptType,'AMfreqtone')
+        % in this condition, the user specifies different am 
+        % frequencies and the program randomizes, and iterates over them for
+        % numReps*unique(ModFreq), where ModFreq is given in stimParams.ModFreq, set the stim type text file to be all 1's!
+
+        % set params here
+    elseif contains(exptType,'AMfreqnoise')
+        % same as AMfreqtone case except set stim type txt to be all 3's
+    elseif contains(exptType,'AMdepthtone')
+        % randomize and iterate over unique AM depths and write them to the ModAmpFile
+        % set stim type to be all 1's
+    elseif contains(exptType,'AMdepthnoise')
+        % randomize and iterate over unique depths and write them to ModAmp
+        % set stim type to be all 3's!
+     elseif contains(exptType,'FM')
+        % repeats FM sweep set by FM1 and 2 (stimParams.FM1,stimParams.FM2)
+        % * numReps, all other params held constant
+    elseif contains(exptType,'oldtono')
+
+        % iterates over these tone frequencies for specified numreps
+        % freqs in khz:
+        % 0.353,0.5,0.707,1,1.414,2,2.828,4,5.656,8,11.312,16,22.624,32
+        % add in unmodulatd noise of the same amplitude as the 15th unique
+        % stimulus
+        % randomize them and write them to tonefreq, repeat (numReps)
+        % all the tones will be stimtype 0, the noise will be stimtype 3!
+
+    elseif contains(exptType,'densetono')
+        % user specifies center frequency and octave spacing of the tuning
+        % curve (center + and - number of octaves at 5 points per octave), then the program iterates over unique tonefreqs (*numReps), shuffles them and
+        % writes them to the tonefreq file
+
+        % stim type gets set to 0 for all
+    end
+% 
+
+
+    % Open the text files for each parameter
+    toneAmpFile = fopen(fullfile(paramsDir, 'ToneAmp.txt'), 'w');
+    toneFreqFile = fopen(fullfile(paramsDir, 'ToneFreq.txt'), 'w');
+    toneDurFile = fopen(fullfile(paramsDir, 'ToneDur.txt'), 'w');
+    modAmpFile = fopen(fullfile(paramsDir, 'ModDepth.txt'), 'w');
+    modFreqFile = fopen(fullfile(paramsDir, 'ModFreq.txt'), 'w');
+    sweepTimeFile = fopen(fullfile(paramsDir, 'FMSweepTime.txt'), 'w');
+    f1File = fopen(fullfile(paramsDir, 'FM1.txt'), 'w');
+    f2File = fopen(fullfile(paramsDir, 'FM2.txt'), 'w');
+    stimTypeFile = fopen(fullfile(paramsDir, 'StimType.txt'), 'w');
+    isiFile = fopen(fullfile(paramsDir, 'ISI.txt'), 'w');
+    deviantFile = fopen(fullfile(paramsDir, 'Deviant.txt'), 'w'); % New file for deviant info
+
+
+
+    try
+            % Write the parameters to their respective text files
+            fprintf(toneAmpFile, '%f\n', currentParams.ToneAmp);
+            fprintf(toneFreqFile, '%f\n', currentParams.ToneFreq);
+            fprintf(toneDurFile, '%f\n', currentParams.ToneDur);
+            fprintf(modAmpFile, '%f\n', currentParams.ModAmp);
+            fprintf(modFreqFile, '%f\n', currentParams.ModFreq);
+            fprintf(sweepTimeFile, '%f\n', currentParams.ID_SweepTime);
+            fprintf(f1File, '%f\n', currentParams.ID_F1);
+            fprintf(f2File, '%f\n', currentParams.ID_F2);
+            fprintf(stimTypeFile, '%f\n', currentParams.StimType);
+            fprintf(isiFile, '%f\n', interstimulusInterval);
+
+
+
+
+    catch exception
+        % Display the error message
+        disp('An error occurred: something stopped the loop before it could finish. Closing files and saving data.');
+        disp(exception.message);
+    end
+
+    % Close the text files
+    fclose(toneAmpFile);
+    fclose(toneFreqFile);
+    fclose(toneDurFile);
+    fclose(modAmpFile);
+    fclose(modFreqFile);
+    fclose(sweepTimeFile);
+    fclose(f1File);
+    fclose(f2File);
+    fclose(stimTypeFile);
+    fclose(isiFile);
+    fclose(deviantFile); % Close the new deviant file
+%end
