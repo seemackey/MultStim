@@ -16,22 +16,22 @@ RP.ClearCOF;
 % Directory for the text files
 paramsDir = 'C:\MultStim\';  % Your directory
 gimmefiggies = 1; % Set to 1 to generate parameter histograms
-filename = 'ch'; % unique filename string
+filename = 'ot037038025'; % unique filename string
 
 % Define the parameters for the stimulus
-stimParams = struct('ToneAmp', 0.5, 'ToneFreq', 5656, 'ToneDur', 50, ...
-                    'ModDepth', 1, 'ModFreq', [2,8,16], 'FMSweepTime', 100, ...
-                    'FM1', 2000, 'FM2', 12000, 'StimType', 0, 'OctaveRange', 1, 'dbSPL',65);
+stimParams = struct('ToneAmp', 0.5, 'ToneFreq', 5656, 'ToneDur', 500, ...
+                    'ModDepth', 1, 'ModFreq', [4,8,16,32,64,128,256], 'FMSweepTime', 100, ...
+                    'FM1', 2000, 'FM2', 12000, 'StimType', 0, 'OctaveRange', 1, 'dbSPL',60);
 
 % Define interstimulus interval (in milliseconds)
-interstimulusInterval = 100;
+interstimulusInterval = 1000;
 
 % Experiment type - User defines the type of experiment
-%exptType = 'AMfreqnoise'; % Change this based on experiment type
+exptType = 'AMfreqnoise'; % Change this based on experiment type
 % exptType = 'AMfreqtone'; % Change this based on experiment type
 % exptType = 'BBN'; % Change this based on experiment type
 %exptType = 'oldtono'; % Change this based on experiment type
- exptType = 'newtono'; % Change this based on experiment type
+% exptType = 'newtono'; % Change this based on experiment type
 
 % Number of repetitions per unique stimulus
 numReps = 75;
@@ -63,24 +63,26 @@ for i = 1:length(paramFiles)
     allParams = [allParams, paramValues];
 end
 
+% Clean headers: Replace spaces with underscores
+cleanParamNames = strrep(paramNames, ' ', '_');
+
 % Generate output file names based on the current date and time
 timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
-ev2FileName = fullfile(futureDir, [filename '_' timestamp '.ev2']);
-
-% Add column headers for the ev2 file
-headers = strjoin(paramNames, ' '); % Convert parameter names to a space-separated string
+ev2FileName = fullfile(futureDir, [filename '_' timestamp '.ev2']); % keep .ev2 if needed
 
 % Open the ev2 file for writing
 fid = fopen(ev2FileName, 'w');
 
-% Write the headers
-fprintf(fid, '%s\n', headers);
+% Write the headers using tab delimiter
+fprintf(fid, '%s\t', cleanParamNames{1:end-1});
+fprintf(fid, '%s\n', cleanParamNames{end});
 
 % Close the file after writing headers
 fclose(fid);
 
-% Append the actual data
-dlmwrite(ev2FileName, allParams, '-append', 'delimiter', ' ');
+% Append the actual data with tab delimiter
+dlmwrite(ev2FileName, allParams, '-append', 'delimiter', '\t');
+
 
 %% CHECK THE PARAMETER SETTINGS WITH THIS PLOT
 if gimmefiggies == 1
