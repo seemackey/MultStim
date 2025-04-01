@@ -1,6 +1,6 @@
-function MultStimGenTrialFxn(stimParams, interstimulusInterval, numReps, exptType, paramsDir)
+function [varyingParam] = MultStimGenTrialFxn(stimParams, interstimulusInterval, numReps, exptType, paramsDir)
     
-    % Determine the number of trials based on experiment type
+    
 % Determine the number of trials based on experiment type
 trialsPerStim = numReps; % Default
 stimType = []; % Placeholder for stimulus type assignment
@@ -20,7 +20,7 @@ calibVoltages_R = calibData_R(:, 2:end); % Voltages for different dB SPLs (Right
 noiseIdx_L = find(isnan(calibData_L));
 noiseIdx_R = find(isnan(calibData_R));
 
-% dB SPL levels available in calibration MUST ALIGN WITH SPREADSHEEET****
+% dB SPL levels available in calibration MUST AGREE WITH SPREADSHEEET****
 calibdBSPLs = [40, 50, 60, 70]; 
 
 % The user specifies the type of experiment we're running
@@ -75,11 +75,36 @@ elseif contains(exptType, 'AMfreqtone')
     toneAmpList_R = ones(1, trialsPerStim) * stimParams.ToneAmp;
 
 elseif contains(exptType, 'AMfreqnoise')
-    % **AM Modulation of Noise**
-    trialsPerStim = numReps * length(unique(stimParams.ModFreq));
-    varyingParam = repmat(unique(stimParams.ModFreq), 1, numReps);
-    varyingParam = varyingParam(randperm(length(varyingParam)));
-    stimTypeList = ones(1, trialsPerStim) * 3; % Noise
+    % **AM Noise**
+
+    % old way of creating rand param list
+    %trialsPerStim = numReps * length(unique(stimParams.ModFreq));
+    % varyingParam = repmat(unique(stimParams.ModFreq), 1, numReps);
+    % varyingParam = varyingParam(randperm(length(varyingParam)));
+    %stimTypeList = ones(1, trialsPerStim) * 3; % Noise
+
+
+    % Create rand param list, new way %%
+    % Get unique modulation frequencies
+    modFreqs = unique(stimParams.ModFreq);
+    
+    % Generate trials ensuring exactly numReps per ModFreq
+    varyingParam = [];
+    stimTypeList = [];
+    
+    for i = 1:length(modFreqs)
+        varyingParam = [varyingParam, repmat(modFreqs(i), 1, numReps)];
+        stimTypeList = [stimTypeList, repmat(3, 1, numReps)];  % Assuming 3 = Noise, change to 0 for tones
+    end
+    
+    % Shuffle the entire set of trials AFTER creating the block
+    shuffledIdx = randperm(length(varyingParam));
+    varyingParam = varyingParam(shuffledIdx);
+    stimTypeList = stimTypeList(shuffledIdx);
+    
+    % Update the total number of trials accordingly
+    trialsPerStim = length(varyingParam);
+
 
     % **Retrieve noise amplitude from calibration**
     [~, dbIdx] = min(abs(calibdBSPLs - stimParams.dbSPL));
@@ -330,10 +355,10 @@ elseif contains(exptType, 'FM')
         end
     
     % Randomize the order of varying parameter if applicable (but NOT for oldtono/tono)
-    if ~isempty(varyingParam) && ~(contains(exptType, 'oldtono') || contains(exptType, 'newtono'))
-        varyingParam = repmat(varyingParam, 1, numReps);
-        varyingParam = varyingParam(randperm(length(varyingParam)));
-    end
+    % if ~isempty(varyingParam) && ~(contains(exptType, 'oldtono') || ~contains(exptType, 'newtono')) || ~contains(exptType, 'AMfreqnoise')
+    %     varyingParam = repmat(varyingParam, 1, numReps);
+    %     varyingParam = varyingParam(randperm(length(varyingParam)));
+    % end
 
     
     % Open text files for writing
