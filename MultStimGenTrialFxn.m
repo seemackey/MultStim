@@ -62,17 +62,103 @@ if contains(exptType, 'BBN')
     % **Fill amplitude lists with noise amplitude**
     toneAmpList_L(:) = noiseAmp_L;
     toneAmpList_R(:) = noiseAmp_R;
+elseif contains(exptType,'Click')
+        % Click
+    % Set StimType to 3 (Noise)
+    trialsPerStim = numReps;
+    varyingParam = NaN(1, trialsPerStim); % placeholder so paramValues has correct shape
+    stimParams.ModFreq = 1;
+    stimTypeList = ones(1, trialsPerStim) * 2; % Noise
+    % **Initialize lists**
+    toneAmpList_L = zeros(1, trialsPerStim);
+    toneAmpList_R = zeros(1, trialsPerStim);
+
+    % **Find noise calibration values**
+    [~, dbIdx] = min(abs(calibdBSPLs - stimParams.dbSPL));
+
+    if calibdBSPLs(dbIdx) == stimParams.dbSPL
+        % Exact match in calibration
+        noiseAmp_L = calibVoltages_L(noiseIdx_L, dbIdx);
+        noiseAmp_R = calibVoltages_R(noiseIdx_R, dbIdx);
+    else
+        % Interpolate between available dB SPL levels
+        lowerIdx = find(calibdBSPLs < stimParams.dbSPL, 1, 'last');
+        upperIdx = find(calibdBSPLs > stimParams.dbSPL, 1, 'first');
+
+        V1_L = calibVoltages_L(noiseIdx_L, lowerIdx);
+        V2_L = calibVoltages_L(noiseIdx_L, upperIdx);
+        V1_R = calibVoltages_R(noiseIdx_R, lowerIdx);
+        V2_R = calibVoltages_R(noiseIdx_R, upperIdx);
+
+        dB1 = calibdBSPLs(lowerIdx);
+        dB2 = calibdBSPLs(upperIdx);
+
+        noiseAmp_L = V1_L * 10^((stimParams.dbSPL - dB1) / 20);
+        noiseAmp_R = V1_R * 10^((stimParams.dbSPL - dB1) / 20);
+    end
+
+    % **Fill amplitude lists with noise amplitude**
+    toneAmpList_L(:) = noiseAmp_L;
+    toneAmpList_R(:) = noiseAmp_R;
 
 elseif contains(exptType, 'AMfreqtone')
-    % **AM Modulation of Tones**
-    trialsPerStim = numReps * length(unique(stimParams.ModFreq));
-    varyingParam = repmat(unique(stimParams.ModFreq), 1, numReps);
-    varyingParam = varyingParam(randperm(length(varyingParam)));
-    stimTypeList = ones(1, trialsPerStim) * 0; % Tones
+    % **AM TONE**
 
-    % Initialize amplitude lists
-    toneAmpList_L = ones(1, trialsPerStim) * stimParams.ToneAmp;
-    toneAmpList_R = ones(1, trialsPerStim) * stimParams.ToneAmp;
+    % old way of creating rand param list
+    %trialsPerStim = numReps * length(unique(stimParams.ModFreq));
+    % varyingParam = repmat(unique(stimParams.ModFreq), 1, numReps);
+    % varyingParam = varyingParam(randperm(length(varyingParam)));
+    %stimTypeList = ones(1, trialsPerStim) * 3; % Noise
+
+
+    % Create rand param list, new way %%
+    % Get unique modulation frequencies
+    modFreqs = unique(stimParams.ModFreq);
+    
+    % Generate trials ensuring exactly numReps per ModFreq
+    varyingParam = [];
+    stimTypeList = [];
+    
+    for i = 1:length(modFreqs)
+        varyingParam = [varyingParam, repmat(modFreqs(i), 1, numReps)];
+        stimTypeList = [stimTypeList, repmat(0, 1, numReps)];  % Assuming 3 = Noise, change to 0 for tones
+    end
+    
+    % Shuffle the entire set of trials AFTER creating the block
+    shuffledIdx = randperm(length(varyingParam));
+    varyingParam = varyingParam(shuffledIdx);
+    stimTypeList = stimTypeList(shuffledIdx);
+    
+    % Update the total number of trials accordingly
+    trialsPerStim = length(varyingParam);
+
+
+    % **Retrieve noise amplitude from calibration**
+    [~, dbIdx] = min(abs(calibdBSPLs - stimParams.dbSPL));
+
+    if calibdBSPLs(dbIdx) == stimParams.dbSPL
+        noiseAmp_L = calibVoltages_L(noiseIdx_L, dbIdx);
+        noiseAmp_R = calibVoltages_R(noiseIdx_R, dbIdx);
+    else
+        % Interpolate between available dB SPL levels
+        lowerIdx = find(calibdBSPLs < stimParams.dbSPL, 1, 'last');
+        upperIdx = find(calibdBSPLs > stimParams.dbSPL, 1, 'first');
+
+        V1_L = calibVoltages_L(noiseIdx_L, lowerIdx);
+        V2_L = calibVoltages_L(noiseIdx_L, upperIdx);
+        V1_R = calibVoltages_R(noiseIdx_R, lowerIdx);
+        V2_R = calibVoltages_R(noiseIdx_R, upperIdx);
+
+        dB1 = calibdBSPLs(lowerIdx);
+        dB2 = calibdBSPLs(upperIdx);
+
+        noiseAmp_L = V1_L * 10^((stimParams.dbSPL - dB1) / 20);
+        noiseAmp_R = V1_R * 10^((stimParams.dbSPL - dB1) / 20);
+    end
+
+    % **Fill amplitude lists**
+    toneAmpList_L = ones(1, trialsPerStim) * noiseAmp_L;
+    toneAmpList_R = ones(1, trialsPerStim) * noiseAmp_R;
 
 elseif contains(exptType, 'AMfreqnoise')
     % **AM Noise**
@@ -352,7 +438,7 @@ elseif contains(exptType, 'FM')
                 toneAmpList_R(i) = V1_R * 10^((stimParams.dbSPL - dB1) / 20);
             end
         end
-        end
+end
     
     % Randomize the order of varying parameter if applicable (but NOT for oldtono/tono)
     % if ~isempty(varyingParam) && ~(contains(exptType, 'oldtono') || ~contains(exptType, 'newtono')) || ~contains(exptType, 'AMfreqnoise')

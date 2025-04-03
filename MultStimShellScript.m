@@ -19,7 +19,7 @@ gimmefiggies = 1; % Set to 1 to generate parameter histograms
 filename = 'ch'; % unique filename string
 
 % Define the parameters for the stimulus
-stimParams = struct('ToneAmp', 0.5, 'ToneFreq', 5656, 'ToneDur', 500, ...
+stimParams = struct('ToneAmp', 0.5, 'ToneFreq', 5656, 'ToneDur', 100, ...
                     'ModDepth', 1, 'ModFreq', [4,8,16,32,64,128,256], 'FMSweepTime', 100, ...
                     'FM1', 2000, 'FM2', 12000, 'StimType', 0, 'OctaveRange', 1, 'dbSPL',60);
 
@@ -30,11 +30,12 @@ interstimulusInterval = 1000;
 %exptType = 'AMfreqnoise'; % Change this based on experiment type
 % exptType = 'AMfreqtone'; % Change this based on experiment type
 % exptType = 'BBN'; % Change this based on experiment type
+ exptType = 'Click';
 %exptType = 'oldtono'; % Change this based on experiment type
- exptType = 'newtono'; % Change this based on experiment type
+% exptType = 'newtono'; % Change this based on experiment type
 
 % Number of repetitions per unique stimulus
-numReps = 100;
+numReps = 50;
 
 % Generate stimuli and write to text files
 [varyingParam] = MultStimGenTrialFxn(stimParams, interstimulusInterval, numReps, exptType, paramsDir);
@@ -114,7 +115,7 @@ while ~strcmpi(userResponse, 'yes') && ~strcmpi(userResponse, 'no')
 
     if strcmpi(userResponse, 'yes') && ~RP.GetStatus()==0
         % Load the appropriate RCX file based on experiment type
-        if contains(exptType,'BBN') || (contains(exptType, 'oldtono') || contains(exptType, 'newtono'))
+        if contains(exptType,'BBN') || (contains(exptType, 'oldtono') || contains(exptType, 'newtono')) || contains(exptType, 'Click')
             RP.LoadCOF('C:\MultStim\MultStim2speakerBBN.rcx');
         else
             RP.LoadCOF('C:\MultStim\MultStim2speaker.rcx');
@@ -127,10 +128,15 @@ while ~strcmpi(userResponse, 'yes') && ~strcmpi(userResponse, 'no')
         stimDuration = stimParams.ToneDur / 1000; % Convert ms to seconds
 
         % Calculate total number of trials
-        totalTrials = numReps * length(unique(varyingParam));
+        % special for BBN here
+        if contains(exptType,'BBN') || (contains(exptType,'Click'))
+            totalTrials = numReps;
+        else
+            totalTrials = numReps * length(unique(varyingParam));
+        end
 
         % Calculate the total duration: (Stimulus duration + ISI) * number of trials
-        totalDuration = totalTrials * (stimDuration + interstimulusInterval);
+        totalDuration = totalTrials * (stimDuration + interstimulusInterval/1000);
 
         % Notify user about expected run time
         fprintf('Experiment running. Estimated duration: %.2f seconds (%.2f minutes).\n', totalDuration, totalDuration / 60);
