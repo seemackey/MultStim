@@ -50,7 +50,8 @@ classdef MultStimGUI < handle
 
             % Filename
             uilabel(obj.fig, 'Position', [20, 70, 100, 20], 'Text', 'Filename:');
-            obj.filenameField = uieditfield(obj.fig, 'text', 'Position', [130, 70, 200, 20], 'Value', 'guiRun');
+            recentFile = obj.getMostRecentFilename('C:\MultStim\TrialParameters');
+            obj.filenameField = uieditfield(obj.fig, 'text', 'Position', [130, 70, 200, 20], 'Value', recentFile);
 
             % Number of repetitions
             uilabel(obj.fig, 'Position', [20, 40, 100, 20], 'Text', 'Repetitions:');
@@ -140,13 +141,27 @@ classdef MultStimGUI < handle
                 end
                 app.stimParams.(fields{i}) = val;
             end
-
-            exptType = app.exptTypeDropdown.Value;
+            if contains(app.exptTypeDropdown.Value,'AM noise')
+                exptType = 'AMfreqnoise'; % the param fxn looks for this string specifically
+            else
+                exptType = app.exptTypeDropdown.Value;
+            end
             stimParams = app.stimParams;
             numReps = app.numRepsField.Value;
             filename = app.filenameField.Value;
 
             runMultStimWithParams(app.RP, stimParams, exptType, numReps, filename);
+        end
+
+        function fname = getMostRecentFilename(~, dirPath)
+            files = dir(fullfile(dirPath, '*.ev2'));
+            if isempty(files)
+                fname = 'guiRun';
+            else
+                [~, idx] = max([files.datenum]);
+                [~, name, ~] = fileparts(files(idx).name);
+                fname = name;
+            end
         end
     end
 end
