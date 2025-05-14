@@ -267,12 +267,14 @@ elseif contains(exptType, 'AMdepthnoise')
 elseif contains(exptType, 'FM')
     % **FM Sweeps**
     trialsPerStim = numReps;
-    stimTypeList = ones(1, trialsPerStim) * 0; % Tones % FM
+   stimParams.ModFreq = 1;
     toneAmpList_L = ones(1, trialsPerStim) * stimParams.ToneAmp;
     toneAmpList_R = ones(1, trialsPerStim) * stimParams.ToneAmp;
-
-    varyingParam = repmat(unique(stimParams.FM1), 1, numReps);
+    stimTypeList = ones(1, trialsPerStim) * 2; % fm tone
+    fmVals = unique(stimParams.FM1);  % if you want multiple FM1s tested
+    varyingParam = repmat(fmVals(:), numReps, 1);  % column vector
     varyingParam = varyingParam(randperm(length(varyingParam)));
+
         
 
 

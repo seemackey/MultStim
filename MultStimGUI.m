@@ -35,7 +35,7 @@ classdef MultStimGUI < handle
             % Experiment Type Dropdown
             uilabel(obj.fig, 'Position', [20, 540, 150, 20], 'Text', 'Select Experiment Type:');
             obj.exptTypeDropdown = uidropdown(obj.fig, 'Position', [180, 540, 150, 20], ...
-                'Items', {'BBN', 'Click', 'oldtono', 'newtono', 'AM noise'}, ...
+                'Items', {'BBN', 'Click', 'oldtono', 'newtono', 'AM noise', 'FM'}, ...
                 'ValueChangedFcn', @(src, event) obj.updateParams());
 
             % Set default value explicitly to trigger correct param init
@@ -78,6 +78,12 @@ classdef MultStimGUI < handle
                 case 'AM noise'
                     app.stimParams.ToneDur = 500;
                     app.stimParams.ISI = 1000;
+                case 'FM'
+                    app.stimParams.ToneDur = 100;
+                    app.stimParams.ISI = 524;
+                    app.createParamField('FM1', app.stimParams.FM1, 'FM Start Freq (Hz)');
+                    app.createParamField('FM2', app.stimParams.FM2, 'FM End Freq (Hz)');
+
                 otherwise
                     app.stimParams.ToneDur = 100;
                     app.stimParams.ISI = 524;
